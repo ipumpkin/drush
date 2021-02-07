@@ -2,7 +2,7 @@
 
 namespace Drush\Sql;
 
-define('PSQL_SHOW_TABLES', "SELECT tablename FROM pg_tables WHERE schemaname='public';");
+define('PSQL_SHOW_TABLES', "SELECT tablename FROM pg_tables WHERE schemaname='%schema%';");
 
 class Sqlpgsql extends SqlBase {
 
@@ -89,8 +89,13 @@ class Sqlpgsql extends SqlBase {
   }
 
   public function query_format($query) {
-    if (strtolower($query) == 'show tables;') {
-      return PSQL_SHOW_TABLES;
+    if ($query === PSQL_SHOW_TABLES) {
+      $schema = 'public';
+      if (!empty($this->db_spec['prefix'])) {
+        $prefix = is_array($this->db_spec['prefix']) ? $this->db_spec['prefix']['default'] : $this->db_spec['prefix'];
+        list($schema,) = explode('.', $prefix);
+      }
+      return str_replace('%schema%', $schema, PSQL_SHOW_TABLES);
     }
     return $query;
   }
